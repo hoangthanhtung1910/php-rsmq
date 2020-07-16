@@ -28,7 +28,7 @@ Example:
 ```php
 <?php
 use Predis\Client;
-use Islambey\RSMQ\RSMQ;
+use AndrewBreksa\RSMQ\RSMQ;
 
 $redis = new Client(
     [
