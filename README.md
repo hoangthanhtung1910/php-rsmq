@@ -11,8 +11,7 @@ A lightweight message queue for PHP that requires no dedicated queue server. Jus
 A fork of [eislambey/php-rsmq](https://github.com/eislambey/php-rsmq) that uses predis.
 
 ## Installation
-1. Add `git@github.com:abreksa4/php-rsmq.git` to your composer.json repositories
-1. Run `composer require andrewbreksa/rsmq`
+    composer require andrewbreksa/rsmq
 
 ## Methods
 

@@ -2,8 +2,17 @@
 
 namespace AndrewBreksa\RSMQ;
 
+/**
+ * Class Util
+ *
+ * @package AndrewBreksa\RSMQ
+ */
 class Util
 {
+    /**
+     * @param  int $length
+     * @return string
+     */
     public function makeID(int $length): string
     {
         $text = '';
@@ -16,9 +25,14 @@ class Util
         return $text;
     }
 
+    /**
+     * @param  int $num
+     * @param  int $count
+     * @return string
+     */
     public function formatZeroPad(int $num, int $count): string
     {
-        $numStr = (string) (pow(10, $count) + $num);
+        $numStr = (string)(pow(10, $count) + $num);
         return substr($numStr, 1);
     }
 }

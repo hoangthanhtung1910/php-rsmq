@@ -5,6 +5,11 @@ namespace AndrewBreksa\RSMQ;
 
 use Predis\ClientInterface;
 
+/**
+ * Class RSMQ
+ *
+ * @package AndrewBreksa\RSMQ
+ */
 class RSMQ
 {
     const MAX_DELAY        = 9999999;
@@ -46,6 +51,13 @@ class RSMQ
      */
     private $changeMessageVisibilitySha1;
 
+    /**
+     * RSMQ constructor.
+     *
+     * @param ClientInterface $redis
+     * @param string          $ns
+     * @param bool            $realtime
+     */
     public function __construct(ClientInterface $redis, string $ns = 'rsmq', bool $realtime = false)
     {
         $this->redis = $redis;
@@ -56,6 +68,7 @@ class RSMQ
 
         $this->initScripts();
     }
+
 
     private function initScripts(): void
     {
@@ -107,14 +120,24 @@ class RSMQ
         $this->changeMessageVisibilitySha1 = $this->redis->script('load', $changeMessageVisibilityScript);
     }
 
+    /**
+     * @param  string $name
+     * @param  int    $vt
+     * @param  int    $delay
+     * @param  int    $maxSize
+     * @return bool
+     * @throws Exception
+     */
     public function createQueue(string $name, int $vt = 30, int $delay = 0, int $maxSize = 65536): bool
     {
-        $this->validate([
-                            'queue'   => $name,
-                            'vt'      => $vt,
-                            'delay'   => $delay,
-                            'maxsize' => $maxSize,
-                        ]);
+        $this->validate(
+            [
+                'queue'   => $name,
+                'vt'      => $vt,
+                'delay'   => $delay,
+                'maxsize' => $maxSize,
+            ]
+        );
 
         $key = "{$this->ns}$name:Q";
 
@@ -135,7 +158,7 @@ class RSMQ
     }
 
     /**
-     * @param array<string, mixed> $params
+     * @param  array<string, mixed> $params
      * @throws Exception
      */
     public function validate(array $params): void
@@ -156,8 +179,9 @@ class RSMQ
             throw new Exception('Delay must be between 0 and ' . self::MAX_DELAY);
         }
 
-        if (isset($params['maxsize']) &&
-            ($params['maxsize'] < self::MIN_MESSAGE_SIZE || $params['maxsize'] > self::MAX_PAYLOAD_SIZE)) {
+        if (isset($params['maxsize'])
+            && ($params['maxsize'] < self::MIN_MESSAGE_SIZE || $params['maxsize'] > self::MAX_PAYLOAD_SIZE)
+        ) {
             $message = "Maximum message size must be between %d and %d";
             throw new Exception(sprintf($message, self::MIN_MESSAGE_SIZE, self::MAX_PAYLOAD_SIZE));
         }
@@ -171,11 +195,17 @@ class RSMQ
         return $this->redis->smembers("{$this->ns}QUEUES");
     }
 
+    /**
+     * @param  string $name
+     * @throws Exception
+     */
     public function deleteQueue(string $name): void
     {
-        $this->validate([
-                            'queue' => $name,
-                        ]);
+        $this->validate(
+            [
+                'queue' => $name,
+            ]
+        );
 
         $key = "{$this->ns}$name";
         $this->redis->multi();
@@ -189,20 +219,22 @@ class RSMQ
     }
 
     /**
-     * @param string   $queue
-     * @param int|null $vt
-     * @param int|null $delay
-     * @param int|null $maxSize
-     * @return array<string, mixed>
+     * @param  string   $queue
+     * @param  int|null $vt
+     * @param  int|null $delay
+     * @param  int|null $maxSize
+     * @return array
      * @throws Exception
      */
     public function setQueueAttributes(string $queue, int $vt = null, int $delay = null, int $maxSize = null): array
     {
-        $this->validate([
-                            'vt'      => $vt,
-                            'delay'   => $delay,
-                            'maxsize' => $maxSize,
-                        ]);
+        $this->validate(
+            [
+                'vt'      => $vt,
+                'delay'   => $delay,
+                'maxsize' => $maxSize,
+            ]
+        );
         $this->getQueue($queue);
 
         $time = $this->redis->time();
@@ -227,16 +259,18 @@ class RSMQ
     }
 
     /**
-     * @param string $name
-     * @param bool   $uid
-     * @return array<string, mixed>
+     * @param  string $name
+     * @param  bool   $uid
+     * @return array|int[]
      * @throws Exception
      */
     private function getQueue(string $name, bool $uid = false): array
     {
-        $this->validate([
-                            'queue' => $name,
-                        ]);
+        $this->validate(
+            [
+                'queue' => $name,
+            ]
+        );
 
         $transaction = $this->redis->transaction();
         $transaction->hmget("{$this->ns}$name:Q", ['vt', 'delay', 'maxsize']);
@@ -266,15 +300,17 @@ class RSMQ
     }
 
     /**
-     * @param string $queue
-     * @return array<string, mixed>
+     * @param  string $queue
+     * @return array
      * @throws Exception
      */
     public function getQueueAttributes(string $queue): array
     {
-        $this->validate([
-                            'queue' => $queue,
-                        ]);
+        $this->validate(
+            [
+                'queue' => $queue,
+            ]
+        );
 
         $key = "{$this->ns}$queue";
         $resp = $this->redis->time();
@@ -305,17 +341,19 @@ class RSMQ
     }
 
     /**
-     * @param string               $queue
-     * @param string               $message
-     * @param array<string, mixed> $options
+     * @param  string $queue
+     * @param  string $message
+     * @param  array  $options
      * @return string
      * @throws Exception
      */
     public function sendMessage(string $queue, string $message, array $options = []): string
     {
-        $this->validate([
-                            'queue' => $queue,
-                        ]);
+        $this->validate(
+            [
+                'queue' => $queue,
+            ]
+        );
 
         $q = $this->getQueue($queue, true);
         $delay = $options['delay'] ?? $q['delay'];
@@ -345,16 +383,18 @@ class RSMQ
     }
 
     /**
-     * @param string               $queue
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @param  string $queue
+     * @param  array  $options
+     * @return array
      * @throws Exception
      */
     public function receiveMessage(string $queue, array $options = []): array
     {
-        $this->validate([
-                            'queue' => $queue,
-                        ]);
+        $this->validate(
+            [
+                'queue' => $queue,
+            ]
+        );
 
         $q = $this->getQueue($queue);
         $vt = $options['vt'] ?? $q['vt'];
@@ -383,15 +423,17 @@ class RSMQ
     }
 
     /**
-     * @param string $queue
-     * @return array<string, mixed>
+     * @param  string $queue
+     * @return array
      * @throws Exception
      */
     public function popMessage(string $queue): array
     {
-        $this->validate([
-                            'queue' => $queue,
-                        ]);
+        $this->validate(
+            [
+                'queue' => $queue,
+            ]
+        );
 
         $q = $this->getQueue($queue);
 
@@ -408,12 +450,20 @@ class RSMQ
         ];
     }
 
+    /**
+     * @param  string $queue
+     * @param  string $id
+     * @return bool
+     * @throws Exception
+     */
     public function deleteMessage(string $queue, string $id): bool
     {
-        $this->validate([
-                            'queue' => $queue,
-                            'id'    => $id,
-                        ]);
+        $this->validate(
+            [
+                'queue' => $queue,
+                'id'    => $id,
+            ]
+        );
 
         $key = "{$this->ns}$queue";
         $this->redis->multi();
@@ -424,13 +474,22 @@ class RSMQ
         return $resp[0] === 1 && $resp[1] > 0;
     }
 
+    /**
+     * @param  string $queue
+     * @param  string $id
+     * @param  int    $vt
+     * @return bool
+     * @throws Exception
+     */
     public function changeMessageVisibility(string $queue, string $id, int $vt): bool
     {
-        $this->validate([
-                            'queue' => $queue,
-                            'id'    => $id,
-                            'vt'    => $vt,
-                        ]);
+        $this->validate(
+            [
+                'queue' => $queue,
+                'id'    => $id,
+                'vt'    => $vt,
+            ]
+        );
 
         $q = $this->getQueue($queue, true);
 

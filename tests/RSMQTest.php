@@ -131,16 +131,18 @@ class RSMQTest extends TestCase
     public function testValidateWithInvalidQueueName(): void
     {
         $this->expectExceptionMessage('Invalid queue name');
-        $this->invokeMethod($this->rsmq, 'validate', [
+        $this->invokeMethod(
+            $this->rsmq, 'validate', [
             ['queue' => ' foo']
-        ]);
+            ]
+        );
 
     }
 
     /**
-     * @param object            $object
-     * @param string            $methodName
-     * @param array<int, mixed> $parameters
+     * @param  object            $object
+     * @param  string            $methodName
+     * @param  array<int, mixed> $parameters
      * @return mixed
      * @throws ReflectionException
      */
@@ -156,33 +158,41 @@ class RSMQTest extends TestCase
     public function testValidateWithInvalidVt(): void
     {
         $this->expectExceptionMessage('Visibility time must be');
-        $this->invokeMethod($this->rsmq, 'validate', [
+        $this->invokeMethod(
+            $this->rsmq, 'validate', [
             ['vt' => '-1']
-        ]);
+            ]
+        );
     }
 
     public function testValidateWithInvalidId(): void
     {
         $this->expectExceptionMessage('Invalid message id');
-        $this->invokeMethod($this->rsmq, 'validate', [
+        $this->invokeMethod(
+            $this->rsmq, 'validate', [
             ['id' => '123456']
-        ]);
+            ]
+        );
     }
 
     public function testValidateWithInvalidDelay(): void
     {
         $this->expectExceptionMessage('Delay must be');
-        $this->invokeMethod($this->rsmq, 'validate', [
+        $this->invokeMethod(
+            $this->rsmq, 'validate', [
             ['delay' => 99999999]
-        ]);
+            ]
+        );
     }
 
     public function testValidateWithInvalidMaxSize(): void
     {
         $this->expectExceptionMessage('Maximum message size must be');
-        $this->invokeMethod($this->rsmq, 'validate', [
+        $this->invokeMethod(
+            $this->rsmq, 'validate', [
             ['maxsize' => 512]
-        ]);
+            ]
+        );
     }
 
     public function testSendMessage(): void
