@@ -68,9 +68,10 @@ Example:
 ```php
 <?php
 /**
- * @var RSMQClientInterface $rsmq
+ * @var AndrewBreksa\RSMQ\RSMQClientInterface $rsmq
  */
-use AndrewBreksa\RSMQ\RSMQClientInterface;$rsmq->createQueue('myqueue');
+
+$rsmq->createQueue('myqueue');
 ```
 
 #### listQueues
@@ -85,9 +86,10 @@ Example:
 ```php
 <?php
 /**
- * @var RSMQClientInterface $rsmq
+ * @var AndrewBreksa\RSMQ\RSMQClientInterface $rsmq
  */
-use AndrewBreksa\RSMQ\RSMQClientInterface;$queues = $rsmq->listQueues();
+
+$queues = $rsmq->listQueues();
 ```
 
 #### deleteQueue
@@ -111,9 +113,10 @@ Example:
 ```php
 <?php
 /**
- * @var RSMQClientInterface $rsmq
+ * @var AndrewBreksa\RSMQ\RSMQClientInterface $rsmq
  */
-use AndrewBreksa\RSMQ\RSMQClientInterface;$rsmq->deleteQueue('myqueue');
+
+$rsmq->deleteQueue('myqueue');
 ```
 
 #### getQueueAttributes
@@ -141,9 +144,10 @@ Example:
 ```php
 <?php
 /**
- * @var RSMQClientInterface $rsmq
+ * @var AndrewBreksa\RSMQ\RSMQClientInterface $rsmq
  */
-use AndrewBreksa\RSMQ\RSMQClientInterface;$attributes =  $rsmq->getQueueAttributes('myqueue');
+
+$attributes =  $rsmq->getQueueAttributes('myqueue');
 echo "visibility timeout: ", $attributes->getVt(), "\n";
 echo "delay for new messages: ", $attributes->getDelay(), "\n";
 echo "max size in bytes: ", $attributes->getMaxSize(), "\n";
@@ -193,9 +197,10 @@ Example:
 ```php
 <?php
 /**
- * @var RSMQClientInterface $rsmq
+ * @var AndrewBreksa\RSMQ\RSMQClientInterface $rsmq
  */
-use AndrewBreksa\RSMQ\RSMQClientInterface;$queue = 'myqueue';
+
+$queue = 'myqueue';
 $vt = 50;
 $delay = 10;
 $maxsize = 2048;
@@ -228,9 +233,10 @@ Example:
 ```php
 <?php
 /**
- * @var RSMQClientInterface $rsmq
+ * @var AndrewBreksa\RSMQ\RSMQClientInterface $rsmq
  */
-use AndrewBreksa\RSMQ\RSMQClientInterface;$id = $rsmq->sendMessage('myqueue', 'a message');
+
+$id = $rsmq->sendMessage('myqueue', 'a message');
 echo "Message Sent. ID: ", $id;
 ```
 
@@ -262,9 +268,10 @@ Example:
 ```php
 <?php
 /**
- * @var RSMQClientInterface $rsmq
+ * @var AndrewBreksa\RSMQ\RSMQClientInterface $rsmq
  */
-use AndrewBreksa\RSMQ\RSMQClientInterface;$message = $rsmq->receiveMessage('myqueue');
+
+$message = $rsmq->receiveMessage('myqueue');
 echo "Message ID: ", $message->getId();
 echo "Message: ", $message->getMessage();
 ```
@@ -287,9 +294,10 @@ Example:
 ```php
 <?php
 /**
- * @var RSMQClientInterface $rsmq
+ * @var AndrewBreksa\RSMQ\RSMQClientInterface $rsmq
  */
-use AndrewBreksa\RSMQ\RSMQClientInterface;$id = $rsmq->sendMessage('queue', 'a message');
+
+$id = $rsmq->sendMessage('queue', 'a message');
 $rsmq->deleteMessage('queue', $id);
 ```
 
@@ -322,9 +330,10 @@ Example:
 ```php
 <?php
 /**
- * @var RSMQClientInterface $rsmq
+ * @var AndrewBreksa\RSMQ\RSMQClientInterface $rsmq
  */
-use AndrewBreksa\RSMQ\RSMQClientInterface;$message = $rsmq->popMessage('myqueue');
+
+$message = $rsmq->popMessage('myqueue');
 echo "Message ID: ", $message->getId();
 echo "Message: ", $message->getMessage();
 ```
@@ -353,9 +362,10 @@ Example:
 ```php
 <?php
 /**
- * @var RSMQClientInterface $rsmq
+ * @var AndrewBreksa\RSMQ\RSMQClientInterface $rsmq
  */
-use AndrewBreksa\RSMQ\RSMQClientInterface;$queue = 'myqueue';
+
+$queue = 'myqueue';
 $id = $rsmq->sendMessage($queue, 'a message');
 if($rsmq->changeMessageVisibility($queue, $id, 60)) {
 	echo "Message hidden for 60 secs";
