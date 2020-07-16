@@ -1,6 +1,6 @@
 # Redis Simple Message Queue
 [![Travis CI](https://travis-ci.org/abreksa4/php-rsmq.svg?branch=master)](https://travis-ci.org/abreksa4/php-rsmq)
-[![Codecov](https://img.shields.io/codecov/c/github/abreksa4/php-rsmq)](https://codecov.io/gh/abreksa4/php-rsmq)
+[![codecov](https://codecov.io/gh/abreksa4/php-rsmq/branch/master/graph/badge.svg)](https://codecov.io/gh/abreksa4/php-rsmq)
 [![GitHub license](https://img.shields.io/github/license/abreksa4/php-rsmq)](https://github.com/abreksa4/php-rsmq/blob/master/LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/abreksa4/php-rsmq)](https://github.com/abreksa4/php-rsmq/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/abreksa4/php-rsmq)](https://github.com/abreksa4/php-rsmq/issues)
