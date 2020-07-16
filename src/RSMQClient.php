@@ -3,14 +3,20 @@ declare(strict_types=1);
 
 namespace AndrewBreksa\RSMQ;
 
+use AndrewBreksa\RSMQ\Exceptions\MessageToLongException;
+use AndrewBreksa\RSMQ\Exceptions\QueueAlreadyExistsException;
+use AndrewBreksa\RSMQ\Exceptions\QueueNotFoundException;
+use AndrewBreksa\RSMQ\Exceptions\QueueParametersValidationException;
 use Predis\ClientInterface;
 
 /**
- * Class RSMQ
+ * Class RSMQClient
  *
  * @package AndrewBreksa\RSMQ
+ * @author  Andrew Breksa <andrew@andrewbreksa.com>
+ * @author  emre can islambey <eislambey@gmail.com>
  */
-class RSMQ
+class RSMQClient implements RSMQClientInterface
 {
     const MAX_DELAY        = 9999999;
     const MIN_MESSAGE_SIZE = 1024;
@@ -19,7 +25,7 @@ class RSMQ
     /**
      * @var ClientInterface
      */
-    private $redis;
+    private $predis;
 
     /**
      * @var string
@@ -30,11 +36,6 @@ class RSMQ
      * @var bool
      */
     private $realtime;
-
-    /**
-     * @var Util
-     */
-    private $util;
 
     /**
      * @var string
@@ -54,17 +55,15 @@ class RSMQ
     /**
      * RSMQ constructor.
      *
-     * @param ClientInterface $redis
+     * @param ClientInterface $predis
      * @param string          $ns
      * @param bool            $realtime
      */
-    public function __construct(ClientInterface $redis, string $ns = 'rsmq', bool $realtime = false)
+    public function __construct(ClientInterface $predis, string $ns = 'rsmq', bool $realtime = false)
     {
-        $this->redis = $redis;
+        $this->predis = $predis;
         $this->ns = "$ns:";
         $this->realtime = $realtime;
-
-        $this->util = new Util();
 
         $this->initScripts();
     }
@@ -115,9 +114,9 @@ class RSMQ
 			redis.call("ZADD", KEYS[1], KEYS[3], KEYS[2])
 			return 1';
 
-        $this->receiveMessageSha1 = $this->redis->script('load', $receiveMessageScript);
-        $this->popMessageSha1 = $this->redis->script('load', $popMessageScript);
-        $this->changeMessageVisibilitySha1 = $this->redis->script('load', $changeMessageVisibilityScript);
+        $this->receiveMessageSha1 = $this->predis->script('load', $receiveMessageScript);
+        $this->popMessageSha1 = $this->predis->script('load', $popMessageScript);
+        $this->changeMessageVisibilitySha1 = $this->predis->script('load', $changeMessageVisibilityScript);
     }
 
     /**
@@ -126,7 +125,7 @@ class RSMQ
      * @param  int    $delay
      * @param  int    $maxSize
      * @return bool
-     * @throws Exception
+     * @throws QueueAlreadyExistsException
      */
     public function createQueue(string $name, int $vt = 30, int $delay = 0, int $maxSize = 65536): bool
     {
@@ -141,49 +140,49 @@ class RSMQ
 
         $key = "{$this->ns}$name:Q";
 
-        $resp = $this->redis->time();
-        $this->redis->multi();
-        $this->redis->hsetnx($key, 'vt', (string)$vt);
-        $this->redis->hsetnx($key, 'delay', (string)$delay);
-        $this->redis->hsetnx($key, 'maxsize', (string)$maxSize);
-        $this->redis->hsetnx($key, 'created', $resp[0]);
-        $this->redis->hsetnx($key, 'modified', $resp[0]);
-        $resp = $this->redis->exec();
+        $resp = $this->predis->time();
+        $this->predis->multi();
+        $this->predis->hsetnx($key, 'vt', (string)$vt);
+        $this->predis->hsetnx($key, 'delay', (string)$delay);
+        $this->predis->hsetnx($key, 'maxsize', (string)$maxSize);
+        $this->predis->hsetnx($key, 'created', $resp[0]);
+        $this->predis->hsetnx($key, 'modified', $resp[0]);
+        $resp = $this->predis->exec();
 
         if (!$resp[0]) {
-            throw new Exception('Queue already exists.');
+            throw new QueueAlreadyExistsException('Queue already exists.');
         }
 
-        return (bool)$this->redis->sadd("{$this->ns}QUEUES", [$name]);
+        return (bool)$this->predis->sadd("{$this->ns}QUEUES", [$name]);
     }
 
     /**
      * @param  array<string, mixed> $params
-     * @throws Exception
+     * @throws QueueParametersValidationException
      */
     public function validate(array $params): void
     {
         if (isset($params['queue']) && !preg_match('/^([a-zA-Z0-9_-]){1,160}$/', $params['queue'])) {
-            throw new Exception('Invalid queue name');
+            throw new QueueParametersValidationException('Invalid queue name');
         }
 
         if (isset($params['id']) && !preg_match('/^([a-zA-Z0-9:]){32}$/', $params['id'])) {
-            throw new Exception('Invalid message id');
+            throw new QueueParametersValidationException('Invalid message id');
         }
 
         if (isset($params['vt']) && ($params['vt'] < 0 || $params['vt'] > self::MAX_DELAY)) {
-            throw new Exception('Visibility time must be between 0 and ' . self::MAX_DELAY);
+            throw new QueueParametersValidationException('Visibility time must be between 0 and ' . self::MAX_DELAY);
         }
 
         if (isset($params['delay']) && ($params['delay'] < 0 || $params['delay'] > self::MAX_DELAY)) {
-            throw new Exception('Delay must be between 0 and ' . self::MAX_DELAY);
+            throw new QueueParametersValidationException('Delay must be between 0 and ' . self::MAX_DELAY);
         }
 
         if (isset($params['maxsize'])
             && ($params['maxsize'] < self::MIN_MESSAGE_SIZE || $params['maxsize'] > self::MAX_PAYLOAD_SIZE)
         ) {
             $message = "Maximum message size must be between %d and %d";
-            throw new Exception(sprintf($message, self::MIN_MESSAGE_SIZE, self::MAX_PAYLOAD_SIZE));
+            throw new QueueParametersValidationException(sprintf($message, self::MIN_MESSAGE_SIZE, self::MAX_PAYLOAD_SIZE));
         }
     }
 
@@ -192,12 +191,12 @@ class RSMQ
      */
     public function listQueues(): array
     {
-        return $this->redis->smembers("{$this->ns}QUEUES");
+        return $this->predis->smembers("{$this->ns}QUEUES");
     }
 
     /**
      * @param  string $name
-     * @throws Exception
+     * @throws QueueNotFoundException
      */
     public function deleteQueue(string $name): void
     {
@@ -208,13 +207,13 @@ class RSMQ
         );
 
         $key = "{$this->ns}$name";
-        $this->redis->multi();
-        $this->redis->del(["$key:Q", $key]);
-        $this->redis->srem("{$this->ns}QUEUES", $name);
-        $resp = $this->redis->exec();
+        $this->predis->multi();
+        $this->predis->del(["$key:Q", $key]);
+        $this->predis->srem("{$this->ns}QUEUES", $name);
+        $resp = $this->predis->exec();
 
         if (!$resp[0]) {
-            throw new Exception('Queue not found.');
+            throw new QueueNotFoundException('Queue not found.');
         }
     }
 
@@ -223,11 +222,16 @@ class RSMQ
      * @param  int|null $vt
      * @param  int|null $delay
      * @param  int|null $maxSize
-     * @return array
-     * @throws Exception
+     * @return QueueAttributes
+     * @throws QueueParametersValidationException
+     * @throws QueueNotFoundException
      */
-    public function setQueueAttributes(string $queue, int $vt = null, int $delay = null, int $maxSize = null): array
-    {
+    public function setQueueAttributes(
+        string $queue,
+        int $vt = null,
+        int $delay = null,
+        int $maxSize = null
+    ): QueueAttributes {
         $this->validate(
             [
                 'vt'      => $vt,
@@ -237,34 +241,34 @@ class RSMQ
         );
         $this->getQueue($queue);
 
-        $time = $this->redis->time();
-        $this->redis->multi();
+        $time = $this->predis->time();
+        $this->predis->multi();
 
-        $this->redis->hset("{$this->ns}$queue:Q", 'modified', $time[0]);
+        $this->predis->hset("{$this->ns}$queue:Q", 'modified', $time[0]);
         if ($vt !== null) {
-            $this->redis->hset("{$this->ns}$queue:Q", 'vt', (string)$vt);
+            $this->predis->hset("{$this->ns}$queue:Q", 'vt', (string)$vt);
         }
 
         if ($delay !== null) {
-            $this->redis->hset("{$this->ns}$queue:Q", 'delay', (string)$delay);
+            $this->predis->hset("{$this->ns}$queue:Q", 'delay', (string)$delay);
         }
 
         if ($maxSize !== null) {
-            $this->redis->hset("{$this->ns}$queue:Q", 'maxsize', (string)$maxSize);
+            $this->predis->hset("{$this->ns}$queue:Q", 'maxsize', (string)$maxSize);
         }
 
-        $this->redis->exec();
+        $this->predis->exec();
 
         return $this->getQueueAttributes($queue);
     }
 
     /**
      * @param  string $name
-     * @param  bool   $uid
+     * @param  bool   $generateUid
      * @return array|int[]
-     * @throws Exception
+     * @throws QueueNotFoundException
      */
-    private function getQueue(string $name, bool $uid = false): array
+    private function getQueue(string $name, bool $generateUid = false): array
     {
         $this->validate(
             [
@@ -272,16 +276,16 @@ class RSMQ
             ]
         );
 
-        $transaction = $this->redis->transaction();
+        $transaction = $this->predis->transaction();
         $transaction->hmget("{$this->ns}$name:Q", ['vt', 'delay', 'maxsize']);
         $transaction->time();
         $resp = $transaction->execute();
 
         if (!isset($resp[0][0])) {
-            throw new Exception('Queue not found.');
+            throw new QueueNotFoundException('Queue not found.');
         }
 
-        $ms = $this->util->formatZeroPad((int)$resp[1][1], 6);
+        $ms = formatZeroPad((int)$resp[1][1], 6);
 
 
         $queue = [
@@ -291,9 +295,8 @@ class RSMQ
             'ts'      => (int)($resp[1][0] . substr($ms, 0, 3)),
         ];
 
-        if ($uid) {
-            $uid = $this->util->makeID(22);
-            $queue['uid'] = base_convert(($resp[1][0] . $ms), 10, 36) . $uid;
+        if ($generateUid) {
+            $queue['uid'] = base_convert(($resp[1][0] . $ms), 10, 36) . makeID(22);
         }
 
         return $queue;
@@ -301,10 +304,11 @@ class RSMQ
 
     /**
      * @param  string $queue
-     * @return array
-     * @throws Exception
+     * @return QueueAttributes
+     * @throws QueueNotFoundException
+     * @throws QueueParametersValidationException
      */
-    public function getQueueAttributes(string $queue): array
+    public function getQueueAttributes(string $queue): QueueAttributes
     {
         $this->validate(
             [
@@ -313,41 +317,41 @@ class RSMQ
         );
 
         $key = "{$this->ns}$queue";
-        $resp = $this->redis->time();
+        $resp = $this->predis->time();
 
-        $transaction = $this->redis->transaction();
+        $transaction = $this->predis->transaction();
         $transaction->hmget("$key:Q", ['vt', 'delay', 'maxsize', 'totalrecv', 'totalsent', 'created', 'modified']);
         $transaction->zcard($key);
         $transaction->zcount($key, $resp[0] . '0000', "+inf");
         $resp = $transaction->execute();
 
         if (!isset($resp[0][0])) {
-            throw new Exception('Queue not found.');
+            throw new QueueNotFoundException('Queue not found.');
         }
 
-        $attributes = [
-            'vt'         => (int)$resp[0][0],
-            'delay'      => (int)$resp[0][1],
-            'maxsize'    => (int)$resp[0][2],
-            'totalrecv'  => (int)$resp[0][3],
-            'totalsent'  => (int)$resp[0][4],
-            'created'    => (int)$resp[0][5],
-            'modified'   => (int)$resp[0][6],
-            'msgs'       => $resp[1],
-            'hiddenmsgs' => $resp[2],
-        ];
-
-        return $attributes;
+        return new QueueAttributes(
+            (int)$resp[0][0],
+            (int)$resp[0][1],
+            (int)$resp[0][2],
+            (int)$resp[0][3],
+            (int)$resp[0][4],
+            (int)$resp[0][5],
+            (int)$resp[0][6],
+            $resp[1],
+            $resp[2]
+        );
     }
 
     /**
-     * @param  string $queue
-     * @param  string $message
-     * @param  array  $options
+     * @param  string   $queue
+     * @param  string   $message
+     * @param  int|null $delay
      * @return string
-     * @throws Exception
+     * @throws MessageToLongException
+     * @throws QueueNotFoundException
+     * @throws QueueParametersValidationException
      */
-    public function sendMessage(string $queue, string $message, array $options = []): string
+    public function sendMessage(string $queue, string $message, int $delay = null): string
     {
         $this->validate(
             [
@@ -356,27 +360,29 @@ class RSMQ
         );
 
         $q = $this->getQueue($queue, true);
-        $delay = $options['delay'] ?? $q['delay'];
+        if ($delay === null) {
+            $delay = $q['delay'];
+        }
 
         if ($q['maxsize'] !== -1 && mb_strlen($message) > $q['maxsize']) {
-            throw new Exception('Message too long');
+            throw new MessageToLongException('Message too long');
         }
 
         $key = "{$this->ns}$queue";
 
-        $this->redis->multi();
-        $this->redis->zadd($key, [$q['uid'] => $q['ts'] + $delay * 1000]);
-        $this->redis->hset("$key:Q", $q['uid'], $message);
-        $this->redis->hincrby("$key:Q", 'totalsent', 1);
+        $this->predis->multi();
+        $this->predis->zadd($key, [$q['uid'] => $q['ts'] + $delay * 1000]);
+        $this->predis->hset("$key:Q", $q['uid'], $message);
+        $this->predis->hincrby("$key:Q", 'totalsent', 1);
 
         if ($this->realtime) {
-            $this->redis->zcard($key);
+            $this->predis->zcard($key);
         }
 
-        $resp = $this->redis->exec();
+        $resp = $this->predis->exec();
 
         if ($this->realtime) {
-            $this->redis->publish("{$this->ns}rt:$$queue", $resp[3]);
+            $this->predis->publish("{$this->ns}rt:$$queue", $resp[3]);
         }
 
         return $q['uid'];
@@ -385,10 +391,11 @@ class RSMQ
     /**
      * @param  string $queue
      * @param  array  $options
-     * @return array
-     * @throws Exception
+     * @return Message|null
+     * @throws QueueNotFoundException
+     * @throws QueueParametersValidationException
      */
-    public function receiveMessage(string $queue, array $options = []): array
+    public function receiveMessage(string $queue, array $options = []): ?Message
     {
         $this->validate(
             [
@@ -399,35 +406,32 @@ class RSMQ
         $q = $this->getQueue($queue);
         $vt = $options['vt'] ?? $q['vt'];
 
-        $args = [
-            "{$this->ns}$queue",
-            $q['ts'],
-            $q['ts'] + $vt * 1000
-        ];
-        $resp = $this->redis->evalsha(
+        $resp = $this->predis->evalsha(
             $this->receiveMessageSha1,
             3,
             "{$this->ns}$queue", $q['ts'],
             $q['ts'] + $vt * 1000
         );
         if (empty($resp)) {
-            return [];
+            return null;
         }
-        return [
-            'id'      => $resp[0],
-            'message' => $resp[1],
-            'rc'      => $resp[2],
-            'fr'      => $resp[3],
-            'sent'    => base_convert(substr($resp[0], 0, 10), 36, 10) / 1000,
-        ];
+
+        return new Message(
+            $resp[0],
+            $resp[1],
+            (int)$resp[2],
+            (int)$resp[3],
+            base_convert(substr($resp[0], 0, 10), 36, 10) / 1000
+        );
     }
 
     /**
      * @param  string $queue
-     * @return array
-     * @throws Exception
+     * @return Message|null
+     * @throws QueueNotFoundException
+     * @throws QueueParametersValidationException
      */
-    public function popMessage(string $queue): array
+    public function popMessage(string $queue): ?Message
     {
         $this->validate(
             [
@@ -437,24 +441,24 @@ class RSMQ
 
         $q = $this->getQueue($queue);
 
-        $resp = $this->redis->evalsha($this->popMessageSha1, 2, "{$this->ns}$queue", $q['ts']);
+        $resp = $this->predis->evalsha($this->popMessageSha1, 2, "{$this->ns}$queue", $q['ts']);
         if (empty($resp)) {
-            return [];
+            return null;
         }
-        return [
-            'id'      => $resp[0],
-            'message' => $resp[1],
-            'rc'      => $resp[2],
-            'fr'      => $resp[3],
-            'sent'    => base_convert(substr($resp[0], 0, 10), 36, 10) / 1000,
-        ];
+        return new Message(
+            $resp[0],
+            $resp[1],
+            (int)$resp[2],
+            (int)$resp[3],
+            base_convert(substr($resp[0], 0, 10), 36, 10) / 1000
+        );
     }
 
     /**
      * @param  string $queue
      * @param  string $id
      * @return bool
-     * @throws Exception
+     * @throws QueueParametersValidationException
      */
     public function deleteMessage(string $queue, string $id): bool
     {
@@ -466,10 +470,10 @@ class RSMQ
         );
 
         $key = "{$this->ns}$queue";
-        $this->redis->multi();
-        $this->redis->zrem($key, $id);
-        $this->redis->hdel("$key:Q", [$id, "$id:rc", "$id:fr"]);
-        $resp = $this->redis->exec();
+        $this->predis->multi();
+        $this->predis->zrem($key, $id);
+        $this->predis->hdel("$key:Q", [$id, "$id:rc", "$id:fr"]);
+        $resp = $this->predis->exec();
 
         return $resp[0] === 1 && $resp[1] > 0;
     }
@@ -479,7 +483,8 @@ class RSMQ
      * @param  string $id
      * @param  int    $vt
      * @return bool
-     * @throws Exception
+     * @throws QueueParametersValidationException
+     * @throws QueueNotFoundException
      */
     public function changeMessageVisibility(string $queue, string $id, int $vt): bool
     {
@@ -493,7 +498,7 @@ class RSMQ
 
         $q = $this->getQueue($queue, true);
 
-        $resp = $this->redis->evalsha(
+        $resp = $this->predis->evalsha(
             $this->changeMessageVisibilitySha1,
             3,
             "{$this->ns}$queue",

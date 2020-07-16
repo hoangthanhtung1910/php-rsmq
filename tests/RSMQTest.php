@@ -1,13 +1,14 @@
 <?php
 
-use AndrewBreksa\RSMQ\RSMQ;
+use AndrewBreksa\RSMQ\Exceptions\QueueParametersValidationException;
+use AndrewBreksa\RSMQ\RSMQClient;
 use PHPUnit\Framework\TestCase;
 use Predis\Client;
 
 class RSMQTest extends TestCase
 {
     /**
-     * @var RSMQ
+     * @var RSMQClient
      */
     private $rsmq;
 
@@ -19,7 +20,7 @@ class RSMQTest extends TestCase
                 'port' => 6379
             ]
         );
-        $this->rsmq = new RSMQ($redis);
+        $this->rsmq = new RSMQClient($redis);
     }
 
     public function testScriptsShouldInitialized(): void
@@ -44,49 +45,49 @@ class RSMQTest extends TestCase
 
     public function testCreateQueueWithInvalidName(): void
     {
-        $this->expectException(\AndrewBreksa\RSMQ\Exception::class);
+        $this->expectException(QueueParametersValidationException::class);
         $this->expectExceptionMessage('Invalid queue name');
         $this->rsmq->createQueue(' sad');
     }
 
     public function testCreateQueueWithBigVt(): void
     {
-        $this->expectException(\AndrewBreksa\RSMQ\Exception::class);
+        $this->expectException(QueueParametersValidationException::class);
         $this->expectExceptionMessage('Visibility time must be between');
         $this->rsmq->createQueue('foo', PHP_INT_MAX);
     }
 
     public function testCreateQueueWithNegativeVt(): void
     {
-        $this->expectException(\AndrewBreksa\RSMQ\Exception::class);
+        $this->expectException(QueueParametersValidationException::class);
         $this->expectExceptionMessage('Visibility time must be between');
         $this->rsmq->createQueue('foo', -1);
     }
 
     public function testCreateQueueWithBigDelay(): void
     {
-        $this->expectException(\AndrewBreksa\RSMQ\Exception::class);
+        $this->expectException(QueueParametersValidationException::class);
         $this->expectExceptionMessage('Delay must be between');
         $this->rsmq->createQueue('foo', 30, PHP_INT_MAX);
     }
 
     public function testCreateQueueWithNegativeDelay(): void
     {
-        $this->expectException(\AndrewBreksa\RSMQ\Exception::class);
+        $this->expectException(QueueParametersValidationException::class);
         $this->expectExceptionMessage('Delay must be between');
         $this->rsmq->createQueue('foo', 30, -1);
     }
 
     public function testCreateQueueWithBigMaxSize(): void
     {
-        $this->expectException(\AndrewBreksa\RSMQ\Exception::class);
+        $this->expectException(QueueParametersValidationException::class);
         $this->expectExceptionMessage('Maximum message size must be between');
         $this->rsmq->createQueue('foo', 30, 0, PHP_INT_MAX);
     }
 
     public function testCreateQueueWithSmallMaxSize(): void
     {
-        $this->expectException(\AndrewBreksa\RSMQ\Exception::class);
+        $this->expectException(QueueParametersValidationException::class);
         $this->expectExceptionMessage('Maximum message size must be between');
         $this->rsmq->createQueue('foo', 30, 0, 1023);
     }
@@ -100,9 +101,15 @@ class RSMQTest extends TestCase
 
         $attributes = $this->rsmq->getQueueAttributes('foo');
 
-        $this->assertSame($vt, $attributes['vt']);
-        $this->assertSame($delay, $attributes['delay']);
-        $this->assertSame($maxSize, $attributes['maxsize']);
+        $this->assertSame($vt, $attributes->getVt());
+        $this->assertSame($delay, $attributes->getDelay());
+        $this->assertSame($maxSize, $attributes->getMaxSize());
+        $this->assertSame(0, $attributes->getMessageCount());
+        $this->assertSame(0, $attributes->getHiddenMessageCount());
+        $this->assertSame(0, $attributes->getTotalReceived());
+        $this->assertSame(0, $attributes->getTotalSent());
+        $this->assertNotEmpty($attributes->getCreated());
+        $this->assertNotEmpty($attributes->getModified());
     }
 
     public function testGetQueueAttributesThatDoesNotExists(): void
@@ -133,8 +140,8 @@ class RSMQTest extends TestCase
         $this->expectExceptionMessage('Invalid queue name');
         $this->invokeMethod(
             $this->rsmq, 'validate', [
-            ['queue' => ' foo']
-            ]
+                           ['queue' => ' foo']
+                       ]
         );
 
     }
@@ -160,8 +167,8 @@ class RSMQTest extends TestCase
         $this->expectExceptionMessage('Visibility time must be');
         $this->invokeMethod(
             $this->rsmq, 'validate', [
-            ['vt' => '-1']
-            ]
+                           ['vt' => '-1']
+                       ]
         );
     }
 
@@ -170,8 +177,8 @@ class RSMQTest extends TestCase
         $this->expectExceptionMessage('Invalid message id');
         $this->invokeMethod(
             $this->rsmq, 'validate', [
-            ['id' => '123456']
-            ]
+                           ['id' => '123456']
+                       ]
         );
     }
 
@@ -180,8 +187,8 @@ class RSMQTest extends TestCase
         $this->expectExceptionMessage('Delay must be');
         $this->invokeMethod(
             $this->rsmq, 'validate', [
-            ['delay' => 99999999]
-            ]
+                           ['delay' => 99999999]
+                       ]
         );
     }
 
@@ -189,8 +196,10 @@ class RSMQTest extends TestCase
     {
         $this->expectExceptionMessage('Maximum message size must be');
         $this->invokeMethod(
-            $this->rsmq, 'validate', [
-            ['maxsize' => 512]
+            $this->rsmq,
+            'validate',
+            [
+                ['maxsize' => 512]
             ]
         );
     }
@@ -200,11 +209,16 @@ class RSMQTest extends TestCase
         $this->rsmq->createQueue('foo');
         $id = $this->rsmq->sendMessage('foo', 'foobar');
         $this->assertSame(32, strlen($id));
+        $attributes = $this->rsmq->getQueueAttributes('foo');
+        $this->assertSame(1, $attributes->getMessageCount());
+        $this->assertSame(0, $attributes->getHiddenMessageCount());
+        $this->assertSame(0, $attributes->getTotalReceived());
+        $this->assertSame(1, $attributes->getTotalSent());
     }
 
     public function testSendMessageRealtime(): void
     {
-        $rsmq = new RSMQ(new Client(['host'=>'127.0.0.1', 'port'=>6379]), 'rsmq', true);
+        $rsmq = new RSMQClient(new Client(['host' => '127.0.0.1', 'port' => 6379]), 'rsmq', true);
         $rsmq->createQueue('foo');
         $id = $rsmq->sendMessage('foo', 'foobar');
         $this->assertSame(32, strlen($id));
@@ -234,8 +248,11 @@ class RSMQTest extends TestCase
         $id = $this->rsmq->sendMessage($queue, $message);
         $received = $this->rsmq->receiveMessage($queue);
 
-        $this->assertSame($message, $received['message']);
-        $this->assertSame($id, $received['id']);
+        $this->assertSame($message, $received->getMessage());
+        $this->assertSame($id, $received->getId());
+        $this->assertNotEmpty($received->getFirstReceived());
+        $this->assertNotEmpty($received->getSent());
+        $this->assertSame(1, $received->getReceiveCount());
     }
 
     public function testReceiveMessageWhenNoMessageExists(): void
@@ -287,8 +304,8 @@ class RSMQTest extends TestCase
         $id = $this->rsmq->sendMessage($queue, $message);
         $received = $this->rsmq->popMessage($queue);
 
-        $this->assertSame($id, $received['id']);
-        $this->assertSame($message, $received['message']);
+        $this->assertSame($id, $received->getId());
+        $this->assertSame($message, $received->getMessage());
     }
 
     public function testPopMessageWhenNoMessageExists(): void
@@ -311,9 +328,9 @@ class RSMQTest extends TestCase
         $this->rsmq->createQueue($queue);
         $attrs = $this->rsmq->setQueueAttributes($queue, $vt, $delay, $maxsize);
 
-        $this->assertSame($vt, $attrs['vt']);
-        $this->assertSame($delay, $attrs['delay']);
-        $this->assertSame($maxsize, $attrs['maxsize']);
+        $this->assertSame($vt, $attrs->getVt());
+        $this->assertSame($delay, $attrs->getDelay());
+        $this->assertSame($maxsize, $attrs->getMaxSize());
     }
 
     public function tearDown(): void
