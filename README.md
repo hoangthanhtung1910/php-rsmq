@@ -1,8 +1,10 @@
 # Redis Simple Message Queue
-[![Travis CI](https://img.shields.io/travis/abreksa4/php-rsmq)](https://travis-ci.org/abreksa4/php-rsmq)
+[![Travis CI](https://travis-ci.org/abreksa4/php-rsmq.svg?branch=master)](https://travis-ci.org/abreksa4/php-rsmq)
 [![Codecov](https://img.shields.io/codecov/c/github/abreksa4/php-rsmq)](https://codecov.io/gh/abreksa4/php-rsmq)
 [![GitHub license](https://img.shields.io/github/license/abreksa4/php-rsmq)](https://github.com/abreksa4/php-rsmq/blob/master/LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/abreksa4/php-rsmq)](https://github.com/abreksa4/php-rsmq/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/abreksa4/php-rsmq)](https://github.com/abreksa4/php-rsmq/issues)
+[![GitHub version](https://badge.fury.io/gh/abreksa4%2Fphp-rsmq.svg)](https://badge.fury.io/gh/abreksa4%2Fphp-rsmq)
 
 A lightweight message queue for PHP that requires no dedicated queue server. Just a Redis server.
 
