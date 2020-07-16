@@ -1,8 +1,10 @@
 <?php
 
 use Islambey\RSMQ\RSMQ;
+use PHPUnit\Framework\TestCase;
+use Predis\Client;
 
-class RSMQTest extends \PHPUnit\Framework\TestCase
+class RSMQTest extends TestCase
 {
     /**
      * @var RSMQ
@@ -11,8 +13,10 @@ class RSMQTest extends \PHPUnit\Framework\TestCase
 
     public function setUp(): void
     {
-        $redis = new Redis();
-        $redis->connect('127.0.0.1', 6379);
+        $redis = new Client([
+                                        'host' => '127.0.0.1',
+                                        'port' => 6379
+                                    ]);
         $this->rsmq = new RSMQ($redis);
     }
 
@@ -129,6 +133,22 @@ class RSMQTest extends \PHPUnit\Framework\TestCase
             ['queue' => ' foo']
         ]);
 
+    }
+
+    /**
+     * @param object            $object
+     * @param string            $methodName
+     * @param array<int, mixed> $parameters
+     * @return mixed
+     * @throws ReflectionException
+     */
+    public function invokeMethod(object &$object, string $methodName, array $parameters = array())
+    {
+        $reflection = new ReflectionClass(get_class($object));
+        $method = $reflection->getMethod($methodName);
+        $method->setAccessible(true);
+
+        return $method->invokeArgs($object, $parameters);
     }
 
     public function testValidateWithInvalidVt(): void
@@ -274,22 +294,6 @@ class RSMQTest extends \PHPUnit\Framework\TestCase
         $this->assertSame($vt, $attrs['vt']);
         $this->assertSame($delay, $attrs['delay']);
         $this->assertSame($maxsize, $attrs['maxsize']);
-    }
-
-    /**
-     * @param object $object
-     * @param string $methodName
-     * @param array<int, mixed> $parameters
-     * @return mixed
-     * @throws ReflectionException
-     */
-    public function invokeMethod(object &$object, string $methodName, array $parameters = array())
-    {
-        $reflection = new \ReflectionClass(get_class($object));
-        $method = $reflection->getMethod($methodName);
-        $method->setAccessible(true);
-
-        return $method->invokeArgs($object, $parameters);
     }
 
     public function tearDown(): void
