@@ -1,6 +1,6 @@
 <?php
 
-use Islambey\RSMQ\RSMQ;
+use AndrewBreksa\RSMQ\RSMQ;
 use PHPUnit\Framework\TestCase;
 use Predis\Client;
 
@@ -13,10 +13,12 @@ class RSMQTest extends TestCase
 
     public function setUp(): void
     {
-        $redis = new Client([
-                                        'host' => '127.0.0.1',
-                                        'port' => 6379
-                                    ]);
+        $redis = new Client(
+            [
+                'host' => '127.0.0.1',
+                'port' => 6379
+            ]
+        );
         $this->rsmq = new RSMQ($redis);
     }
 
@@ -42,49 +44,49 @@ class RSMQTest extends TestCase
 
     public function testCreateQueueWithInvalidName(): void
     {
-        $this->expectException(\Islambey\RSMQ\Exception::class);
+        $this->expectException(\AndrewBreksa\RSMQ\Exception::class);
         $this->expectExceptionMessage('Invalid queue name');
         $this->rsmq->createQueue(' sad');
     }
 
     public function testCreateQueueWithBigVt(): void
     {
-        $this->expectException(\Islambey\RSMQ\Exception::class);
+        $this->expectException(\AndrewBreksa\RSMQ\Exception::class);
         $this->expectExceptionMessage('Visibility time must be between');
         $this->rsmq->createQueue('foo', PHP_INT_MAX);
     }
 
     public function testCreateQueueWithNegativeVt(): void
     {
-        $this->expectException(\Islambey\RSMQ\Exception::class);
+        $this->expectException(\AndrewBreksa\RSMQ\Exception::class);
         $this->expectExceptionMessage('Visibility time must be between');
         $this->rsmq->createQueue('foo', -1);
     }
 
     public function testCreateQueueWithBigDelay(): void
     {
-        $this->expectException(\Islambey\RSMQ\Exception::class);
+        $this->expectException(\AndrewBreksa\RSMQ\Exception::class);
         $this->expectExceptionMessage('Delay must be between');
         $this->rsmq->createQueue('foo', 30, PHP_INT_MAX);
     }
 
     public function testCreateQueueWithNegativeDelay(): void
     {
-        $this->expectException(\Islambey\RSMQ\Exception::class);
+        $this->expectException(\AndrewBreksa\RSMQ\Exception::class);
         $this->expectExceptionMessage('Delay must be between');
         $this->rsmq->createQueue('foo', 30, -1);
     }
 
     public function testCreateQueueWithBigMaxSize(): void
     {
-        $this->expectException(\Islambey\RSMQ\Exception::class);
+        $this->expectException(\AndrewBreksa\RSMQ\Exception::class);
         $this->expectExceptionMessage('Maximum message size must be between');
         $this->rsmq->createQueue('foo', 30, 0, PHP_INT_MAX);
     }
 
     public function testCreateQueueWithSmallMaxSize(): void
     {
-        $this->expectException(\Islambey\RSMQ\Exception::class);
+        $this->expectException(\AndrewBreksa\RSMQ\Exception::class);
         $this->expectExceptionMessage('Maximum message size must be between');
         $this->rsmq->createQueue('foo', 30, 0, 1023);
     }
@@ -187,6 +189,14 @@ class RSMQTest extends TestCase
     {
         $this->rsmq->createQueue('foo');
         $id = $this->rsmq->sendMessage('foo', 'foobar');
+        $this->assertSame(32, strlen($id));
+    }
+
+    public function testSendMessageRealtime(): void
+    {
+        $rsmq = new RSMQ(new Client(['host'=>'127.0.0.1', 'port'=>6379]), 'rsmq', true);
+        $rsmq->createQueue('foo');
+        $id = $rsmq->sendMessage('foo', 'foobar');
         $this->assertSame(32, strlen($id));
     }
 

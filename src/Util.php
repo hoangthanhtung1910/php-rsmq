@@ -1,6 +1,6 @@
 <?php
 
-namespace Islambey\RSMQ;
+namespace AndrewBreksa\RSMQ;
 
 class Util
 {

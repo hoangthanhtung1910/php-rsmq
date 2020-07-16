@@ -1,13 +1,16 @@
 # Redis Simple Message Queue
-[![Travis CI](https://img.shields.io/travis/eislambey/php-rsmq)](https://travis-ci.org/eislambey/php-rsmq)
-[![Codecov](https://img.shields.io/codecov/c/github/eislambey/php-rsmq)](https://codecov.io/gh/eislambey/php-rsmq)
+[![Travis CI](https://img.shields.io/travis/abreksa4/php-rsmq)](https://travis-ci.org/abreksa4/php-rsm)
+[![Codecov](https://img.shields.io/codecov/c/github/abreksa4/php-rsmq)](https://codecov.io/gh/abreksa4/php-rsm)
+[![GitHub license](https://img.shields.io/github/license/abreksa4/php-rsmq)](https://github.com/abreksa4/php-rsmq/blob/master/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/abreksa4/php-rsmq)](https://github.com/abreksa4/php-rsmq/stargazers)
 
 A lightweight message queue for PHP that requires no dedicated queue server. Just a Redis server.
 
-PHP implementation of [smrchy/rsmq](https://github.com/smrchy/rsmq)
+A fork of [eislambey/php-rsmq](https://github.com/eislambey/php-rsmq) that uses predis.
 
 ## Installation
-	composer require eislambey/rsmq
+1. Add `git@github.com:abreksa4/php-rsmq.git` to your composer.json repositories
+1. Run `composer require andrewbreksa/rsmq`
 
 ## Methods
 
@@ -24,10 +27,16 @@ Example:
 
 ```php
 <?php
+use Predis\Client;
+use Islambey\RSMQ\RSMQ;
 
-$redis = new Redis();
-$redis->connect('127.0.0.1', 6379);
-$rsmq = new \Islambey\RSMQ\RSMQ($redis);
+$redis = new Client(
+    [
+        'host' => '127.0.0.1',
+        'port' => 6379
+    ]
+);
+$this->rsmq = new RSMQ($redis);
 ```
 
 ### Queue
@@ -47,7 +56,7 @@ Returns:
 * `true` (Bool)
 
 Throws:
-* `\Islambey\RSMQ\Exception`
+* `\AndrewBreksa\RSMQ\Exception`
 
 Example:
 
@@ -86,7 +95,7 @@ Returns:
 
 Throws:
 
-* `\Islambey\RSMQ\Exception`
+* `\AndrewBreksa\RSMQ\Exception`
 
 Example:
 
@@ -158,7 +167,7 @@ Returns an associative array:
 * `hiddenmsgs` (int): Current number of hidden / not visible messages. A message can be hidden while "in flight" due to a `vt` parameter or when sent with a `delay`
 
 Throws:
-* `\Islambey\RSMQ\Exception`
+* `\AndrewBreksa\RSMQ\Exception`
 
 Example:
 
@@ -188,7 +197,7 @@ Returns:
 * `$id` (string): The internal message id.
 
 Throws:
-* `\Islambey\RSMQ\Exception`
+* `\AndrewBreksa\RSMQ\Exception`
 
 Example:
 
@@ -218,7 +227,7 @@ Returns an associative array:
 Note: Will return an empty array if no message is there  
 
 Throws:
-* `\Islambey\RSMQ\Exception`
+* `\AndrewBreksa\RSMQ\Exception`
 
 Example:
 
@@ -241,7 +250,7 @@ Returns:
 * `true` if successful, `false` if the message was not found (bool).
 
 Throws:
-* `\Islambey\RSMQ\Exception`
+* `\AndrewBreksa\RSMQ\Exception`
 
 Example:
 
@@ -272,7 +281,7 @@ Returns an associvative array:
 Note: Will return an empty object if no message is there
 
 Throws:
-* `\Islambey\RSMQ\Exception`
+* `\AndrewBreksa\RSMQ\Exception`
 
 Example:
 
@@ -299,7 +308,7 @@ Returns:
 * `true` if successful, `false` if the message was not found (bool).
 
 Throws:
-* `\Islambey\RSMQ\Exception`
+* `\AndrewBreksa\RSMQ\Exception`
 
 Example:
 

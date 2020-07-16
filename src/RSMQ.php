@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Islambey\RSMQ;
+namespace AndrewBreksa\RSMQ;
 
 use Predis\ClientInterface;
 

@@ -1,7 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-use Islambey\RSMQ\Util;
+use AndrewBreksa\RSMQ\Util;
 
 class UtilTest extends TestCase
 {

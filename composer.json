@@ -1,8 +1,9 @@
 {
-  "name": "eislambey/rsmq",
+  "name": "andrewbreksa/rsmq",
   "description": "Redis Simple Message Queue.",
   "type": "library",
   "license": "MIT",
+  "version": "1.0.0",
   "authors": [
     {
       "name": "emre can islambey",
@@ -20,7 +21,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Islambey\\RSMQ\\": "src/"
+      "AndrewBreksa\\RSMQ\\": "src/"
     }
   },
   "suggest": {
