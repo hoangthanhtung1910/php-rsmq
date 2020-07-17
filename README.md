@@ -1,9 +1,14 @@
 # Redis Simple Message Queue
 [![Travis CI](https://travis-ci.org/abreksa4/php-rsmq.svg?branch=master)](https://travis-ci.org/abreksa4/php-rsmq)
 [![codecov](https://codecov.io/gh/abreksa4/php-rsmq/branch/master/graph/badge.svg)](https://codecov.io/gh/abreksa4/php-rsmq)
-[![GitHub license](https://img.shields.io/github/license/abreksa4/php-rsmq)](https://github.com/abreksa4/php-rsmq/blob/master/LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/abreksa4/php-rsmq)](https://github.com/abreksa4/php-rsmq/stargazers)
+[![License](https://poser.pugx.org/andrewbreksa/rsmq/license)](//packagist.org/packages/andrewbreksa/rsmq)
 [![GitHub issues](https://img.shields.io/github/issues/abreksa4/php-rsmq)](https://github.com/abreksa4/php-rsmq/issues)
+[![Latest Stable Version](https://poser.pugx.org/andrewbreksa/rsmq/v)](//packagist.org/packages/andrewbreksa/rsmq) 
+[![Latest Unstable Version](https://poser.pugx.org/andrewbreksa/rsmq/v/unstable)](//packagist.org/packages/andrewbreksa/rsmq) 
+[![composer.lock](https://poser.pugx.org/andrewbreksa/rsmq/composerlock)](//packagist.org/packages/andrewbreksa/rsmq)
+[![Total Downloads](https://poser.pugx.org/andrewbreksa/rsmq/downloads)](//packagist.org/packages/andrewbreksa/rsmq) 
+[![GitHub stars](https://img.shields.io/github/stars/abreksa4/php-rsmq)](https://github.com/abreksa4/php-rsmq/stargazers)
+[![Dependents](https://poser.pugx.org/andrewbreksa/rsmq/dependents)](//packagist.org/packages/andrewbreksa/rsmq)
 
 A lightweight message queue for PHP that requires no dedicated queue server. Just a Redis server. See 
 [smrchy/rsmq](https://github.com/smrchy/rsmq) for more information.
