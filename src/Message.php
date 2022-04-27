@@ -48,11 +48,11 @@ class Message
      */
     public function __construct(string $id, string $message, int $receiveCount, int $firstReceived, float $sent)
     {
-        $this->id = $id;
-        $this->message = $message;
-        $this->receiveCount = $receiveCount;
+        $this->id            = $id;
+        $this->message       = $message;
+        $this->receiveCount  = $receiveCount;
         $this->firstReceived = $firstReceived;
-        $this->sent = $sent;
+        $this->sent          = $sent;
     }
 
     /**

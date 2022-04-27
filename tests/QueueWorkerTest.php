@@ -18,12 +18,12 @@ class QueueWorkerTest extends TestCase
 
     public function testEjectFromSleepProvider()
     {
-        $rsmq = Mockery::mock(RSMQClientInterface::class);
-        $executor = Mockery::mock(ExecutorInterface::class);
+        $rsmq          = Mockery::mock(RSMQClientInterface::class);
+        $executor      = Mockery::mock(ExecutorInterface::class);
         $sleepProvider = Mockery::mock(WorkerSleepProvider::class);
         $sleepProvider->shouldReceive('getSleep')
-            ->andReturn(null)
-            ->once();
+                      ->andReturn(null)
+                      ->once();
         $worker = new QueueWorker($rsmq, $executor, $sleepProvider, 'test');
 
         $worker->work(true);
@@ -33,20 +33,20 @@ class QueueWorkerTest extends TestCase
     public function testProcessOneAvilableFailed()
     {
         $message = Mockery::mock(Message::class);
-        $rsmq = Mockery::mock(RSMQClientInterface::class);
+        $rsmq    = Mockery::mock(RSMQClientInterface::class);
         $rsmq->shouldReceive('receiveMessage')
-            ->with('test')
-            ->andReturn($message)
-            ->once();
+             ->with('test')
+             ->andReturn($message)
+             ->once();
         $executor = Mockery::mock(ExecutorInterface::class);
         $executor->shouldReceive('__invoke')
-            ->with($message)
-            ->andReturn(false)
-            ->once();
+                 ->with($message)
+                 ->andReturn(false)
+                 ->once();
         $sleepProvider = Mockery::mock(WorkerSleepProvider::class);
         $sleepProvider->shouldReceive('getSleep')
-            ->andReturn(0)
-            ->once();
+                      ->andReturn(0)
+                      ->once();
         $worker = new QueueWorker($rsmq, $executor, $sleepProvider, 'test');
 
         $worker->work(true);
@@ -59,25 +59,25 @@ class QueueWorkerTest extends TestCase
     {
         $message = Mockery::mock(Message::class);
         $message->shouldReceive('getId')
-            ->andReturn('test_id')
-            ->once();
+                ->andReturn('test_id')
+                ->once();
         $rsmq = Mockery::mock(RSMQClientInterface::class);
         $rsmq->shouldReceive('receiveMessage')
-            ->with('test')
-            ->andReturn(null, $message)
-            ->twice();
+             ->with('test')
+             ->andReturn(null, $message)
+             ->twice();
         $rsmq->shouldReceive('deleteMessage')
-            ->with('test', 'test_id')
-            ->once();
+             ->with('test', 'test_id')
+             ->once();
         $executor = Mockery::mock(ExecutorInterface::class);
         $executor->shouldReceive('__invoke')
-            ->with($message)
-            ->andReturn(true)
-            ->once();
+                 ->with($message)
+                 ->andReturn(true)
+                 ->once();
         $sleepProvider = Mockery::mock(WorkerSleepProvider::class);
         $sleepProvider->shouldReceive('getSleep')
-            ->andReturn(0)
-            ->twice();
+                      ->andReturn(0)
+                      ->twice();
         $worker = new QueueWorker($rsmq, $executor, $sleepProvider, 'test');
 
         $worker->work(true);
@@ -90,25 +90,25 @@ class QueueWorkerTest extends TestCase
     {
         $message = Mockery::mock(Message::class);
         $message->shouldReceive('getId')
-            ->andReturn('test_id')
-            ->twice();
+                ->andReturn('test_id')
+                ->twice();
         $rsmq = Mockery::mock(RSMQClientInterface::class);
         $rsmq->shouldReceive('receiveMessage')
-            ->with('test')
-            ->andReturn($message, $message, $message)
-            ->times(3);
+             ->with('test')
+             ->andReturn($message, $message, $message)
+             ->times(3);
         $rsmq->shouldReceive('deleteMessage')
-            ->with('test', 'test_id')
-            ->twice();
+             ->with('test', 'test_id')
+             ->twice();
         $executor = Mockery::mock(ExecutorInterface::class);
         $executor->shouldReceive('__invoke')
-            ->with($message)
-            ->andReturn(false, true, true)
-            ->times(3);
+                 ->with($message)
+                 ->andReturn(false, true, true)
+                 ->times(3);
         $sleepProvider = Mockery::mock(WorkerSleepProvider::class);
         $sleepProvider->shouldReceive('getSleep')
-            ->andReturn(0, 0, 0, null)
-            ->times(4);
+                      ->andReturn(0, 0, 0, null)
+                      ->times(4);
         $worker = new QueueWorker($rsmq, $executor, $sleepProvider, 'test');
 
         $worker->work();

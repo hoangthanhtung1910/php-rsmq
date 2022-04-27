@@ -81,14 +81,14 @@ class QueueAttributes
         int $messageCount,
         int $hiddenMessageCount
     ) {
-        $this->vt = $vt;
-        $this->delay = $delay;
-        $this->maxSize = $maxSize;
-        $this->totalReceived = $totalReceived;
-        $this->totalSent = $totalSent;
-        $this->created = $created;
-        $this->modified = $modified;
-        $this->messageCount = $messageCount;
+        $this->vt                 = $vt;
+        $this->delay              = $delay;
+        $this->maxSize            = $maxSize;
+        $this->totalReceived      = $totalReceived;
+        $this->totalSent          = $totalSent;
+        $this->created            = $created;
+        $this->modified           = $modified;
+        $this->messageCount       = $messageCount;
         $this->hiddenMessageCount = $hiddenMessageCount;
     }
 

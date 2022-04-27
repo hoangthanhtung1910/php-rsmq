@@ -57,19 +57,19 @@ class QueueWorker
      */
     public function __construct(
         RSMQClientInterface $rsmq,
-        ExecutorInterface $executor,
+        ExecutorInterface   $executor,
         WorkerSleepProvider $sleepProvider,
-        string $queue
+        string              $queue
     ) {
-        $this->rsmq = $rsmq;
-        $this->executor = $executor;
+        $this->rsmq          = $rsmq;
+        $this->executor      = $executor;
         $this->sleepProvider = $sleepProvider;
-        $this->queue = $queue;
+        $this->queue         = $queue;
     }
 
 
     /**
-     * @param  bool $processOne
+     * @param bool $processOne
      * @throws Exceptions\QueueNotFoundException
      * @throws Exceptions\QueueParametersValidationException
      */

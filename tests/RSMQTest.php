@@ -14,7 +14,7 @@ class RSMQTest extends TestCase
 
     public function setUp(): void
     {
-        $redis = new Client(
+        $redis      = new Client(
             [
                 'host' => '127.0.0.1',
                 'port' => 6379
@@ -94,8 +94,8 @@ class RSMQTest extends TestCase
 
     public function testGetQueueAttributes(): void
     {
-        $vt = 40;
-        $delay = 60;
+        $vt      = 40;
+        $delay   = 60;
         $maxSize = 1024;
         $this->rsmq->createQueue('foo', $vt, $delay, $maxSize);
 
@@ -147,16 +147,16 @@ class RSMQTest extends TestCase
     }
 
     /**
-     * @param  object            $object
-     * @param  string            $methodName
-     * @param  array<int, mixed> $parameters
+     * @param object            $object
+     * @param string            $methodName
+     * @param array<int, mixed> $parameters
      * @return mixed
      * @throws ReflectionException
      */
     public function invokeMethod(object &$object, string $methodName, array $parameters = array())
     {
         $reflection = new ReflectionClass(get_class($object));
-        $method = $reflection->getMethod($methodName);
+        $method     = $reflection->getMethod($methodName);
         $method->setAccessible(true);
 
         return $method->invokeArgs($object, $parameters);
@@ -242,10 +242,10 @@ class RSMQTest extends TestCase
 
     public function testReceiveMessage(): void
     {
-        $queue = 'foo';
+        $queue   = 'foo';
         $message = 'Hello World';
         $this->rsmq->createQueue($queue);
-        $id = $this->rsmq->sendMessage($queue, $message);
+        $id       = $this->rsmq->sendMessage($queue, $message);
         $received = $this->rsmq->receiveMessage($queue);
 
         $this->assertSame($message, $received->getMessage());
@@ -276,9 +276,9 @@ class RSMQTest extends TestCase
     public function testGetQueue(): void
     {
         $queueName = 'foo';
-        $vt = 30;
-        $delay = 0;
-        $maxSize = 65536;
+        $vt        = 30;
+        $delay     = 0;
+        $maxSize   = 65536;
         $this->rsmq->createQueue($queueName, $vt, $delay, $maxSize);
         $queue = $this->invokeMethod($this->rsmq, 'getQueue', [$queueName, true]);
 
@@ -297,11 +297,11 @@ class RSMQTest extends TestCase
 
     public function testPopMessage(): void
     {
-        $queue = 'foo';
+        $queue   = 'foo';
         $message = 'bar';
         $this->rsmq->createQueue($queue);
 
-        $id = $this->rsmq->sendMessage($queue, $message);
+        $id       = $this->rsmq->sendMessage($queue, $message);
         $received = $this->rsmq->popMessage($queue);
 
         $this->assertSame($id, $received->getId());
@@ -321,9 +321,9 @@ class RSMQTest extends TestCase
 
     public function testSetQueueAttributes(): void
     {
-        $queue = 'foo';
-        $vt = 100;
-        $delay = 10;
+        $queue   = 'foo';
+        $vt      = 100;
+        $delay   = 10;
         $maxsize = 2048;
         $this->rsmq->createQueue($queue);
         $attrs = $this->rsmq->setQueueAttributes($queue, $vt, $delay, $maxsize);
