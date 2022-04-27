@@ -3,7 +3,7 @@
 namespace AndrewBreksa\RSMQ;
 
 /**
- * @param int $length
+ * @param  int $length
  * @return string
  */
 function makeID(int $length): string
@@ -19,8 +19,8 @@ function makeID(int $length): string
 }
 
 /**
- * @param int $num
- * @param int $count
+ * @param  int $num
+ * @param  int $count
  * @return string
  */
 function formatZeroPad(int $num, int $count): string

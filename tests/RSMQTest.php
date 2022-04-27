@@ -147,9 +147,9 @@ class RSMQTest extends TestCase
     }
 
     /**
-     * @param object            $object
-     * @param string            $methodName
-     * @param array<int, mixed> $parameters
+     * @param  object            $object
+     * @param  string            $methodName
+     * @param  array<int, mixed> $parameters
      * @return mixed
      * @throws ReflectionException
      */

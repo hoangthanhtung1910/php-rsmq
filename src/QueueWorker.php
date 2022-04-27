@@ -69,7 +69,7 @@ class QueueWorker
 
 
     /**
-     * @param bool $processOne
+     * @param  bool $processOne
      * @throws Exceptions\QueueNotFoundException
      * @throws Exceptions\QueueParametersValidationException
      */
@@ -77,7 +77,7 @@ class QueueWorker
     {
         while (true) {
             $sleep = $this->sleepProvider->getSleep();
-            if ($sleep === null) {
+            if ($sleep === null || $sleep < 0) {
                 break;
             }
             $message = $this->rsmq->receiveMessage($this->queue);

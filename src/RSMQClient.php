@@ -23,34 +23,34 @@ class RSMQClient implements RSMQClientInterface
     const MAX_PAYLOAD_SIZE = 65536;
 
     /**
-     * @var ClientInterface
+     * @var ClientInterface 
      */
-    private $predis;
+    private ClientInterface $predis;
 
     /**
-     * @var string
+     * @var string 
      */
-    private $ns;
+    private string $ns;
 
     /**
-     * @var bool
+     * @var bool 
      */
-    private $realtime;
+    private bool $realtime;
 
     /**
-     * @var string
+     * @var string 
      */
-    private $receiveMessageSha1;
+    private string $receiveMessageSha1;
 
     /**
-     * @var string
+     * @var string 
      */
-    private $popMessageSha1;
+    private string $popMessageSha1;
 
     /**
-     * @var string
+     * @var string 
      */
-    private $changeMessageVisibilitySha1;
+    private string $changeMessageVisibilitySha1;
 
     /**
      * RSMQ constructor.
@@ -120,10 +120,10 @@ class RSMQClient implements RSMQClientInterface
     }
 
     /**
-     * @param string $name
-     * @param int    $vt
-     * @param int    $delay
-     * @param int    $maxSize
+     * @param  string $name
+     * @param  int    $vt
+     * @param  int    $delay
+     * @param  int    $maxSize
      * @return bool
      * @throws QueueAlreadyExistsException
      */
@@ -147,7 +147,7 @@ class RSMQClient implements RSMQClientInterface
         $this->predis->hsetnx($key, 'maxsize', (string)$maxSize);
         $this->predis->hsetnx($key, 'created', $resp[0]);
         $this->predis->hsetnx($key, 'modified', $resp[0]);
-        $resp = $this->predis->exec();
+        $resp = $this->predis->exec() ?? [];
 
         if (!$resp[0]) {
             throw new QueueAlreadyExistsException('Queue already exists.');
@@ -157,16 +157,16 @@ class RSMQClient implements RSMQClientInterface
     }
 
     /**
-     * @param array<string, mixed> $params
+     * @param  array<string, mixed> $params
      * @throws QueueParametersValidationException
      */
     public function validate(array $params): void
     {
-        if (isset($params['queue']) && !preg_match('/^([a-zA-Z0-9_-]){1,160}$/', $params['queue'])) {
+        if (isset($params['queue']) && !preg_match('/^([a-zA-Z0-9_-]){1,160}$/', (string)$params['queue'])) {
             throw new QueueParametersValidationException('Invalid queue name');
         }
 
-        if (isset($params['id']) && !preg_match('/^([a-zA-Z0-9:]){32}$/', $params['id'])) {
+        if (isset($params['id']) && !preg_match('/^([a-zA-Z0-9:]){32}$/', (string)$params['id'])) {
             throw new QueueParametersValidationException('Invalid message id');
         }
 
@@ -182,8 +182,12 @@ class RSMQClient implements RSMQClientInterface
             && $params['maxsize'] !== -1 && ($params['maxsize'] < self::MIN_MESSAGE_SIZE || $params['maxsize'] > self::MAX_PAYLOAD_SIZE)
         ) {
             $message = "Maximum message size must be between %d and %d";
-            throw new QueueParametersValidationException(sprintf($message, self::MIN_MESSAGE_SIZE,
-                                                                 self::MAX_PAYLOAD_SIZE));
+            throw new QueueParametersValidationException(
+                sprintf(
+                    $message, self::MIN_MESSAGE_SIZE,
+                    self::MAX_PAYLOAD_SIZE
+                )
+            );
         }
     }
 
@@ -196,7 +200,7 @@ class RSMQClient implements RSMQClientInterface
     }
 
     /**
-     * @param string $name
+     * @param  string $name
      * @throws QueueNotFoundException
      */
     public function deleteQueue(string $name): void
@@ -211,7 +215,7 @@ class RSMQClient implements RSMQClientInterface
         $this->predis->multi();
         $this->predis->del(["$key:Q", $key]);
         $this->predis->srem("{$this->ns}QUEUES", $name);
-        $resp = $this->predis->exec();
+        $resp = $this->predis->exec() ?? [];
 
         if (!$resp[0]) {
             throw new QueueNotFoundException('Queue not found.');
@@ -219,10 +223,10 @@ class RSMQClient implements RSMQClientInterface
     }
 
     /**
-     * @param string   $queue
-     * @param int|null $vt
-     * @param int|null $delay
-     * @param int|null $maxSize
+     * @param  string   $queue
+     * @param  int|null $vt
+     * @param  int|null $delay
+     * @param  int|null $maxSize
      * @return QueueAttributes
      * @throws QueueParametersValidationException
      * @throws QueueNotFoundException
@@ -264,8 +268,8 @@ class RSMQClient implements RSMQClientInterface
     }
 
     /**
-     * @param string $name
-     * @param bool   $generateUid
+     * @param  string $name
+     * @param  bool   $generateUid
      * @return array|int[]
      * @throws QueueNotFoundException
      */
@@ -277,6 +281,9 @@ class RSMQClient implements RSMQClientInterface
             ]
         );
 
+        /**
+ * @psalm-suppress UndefinedMagicMethod 
+*/
         $transaction = $this->predis->transaction();
         $transaction->hmget("{$this->ns}$name:Q", ['vt', 'delay', 'maxsize']);
         $transaction->time();
@@ -304,7 +311,7 @@ class RSMQClient implements RSMQClientInterface
     }
 
     /**
-     * @param string $queue
+     * @param  string $queue
      * @return QueueAttributes
      * @throws QueueNotFoundException
      * @throws QueueParametersValidationException
@@ -320,6 +327,9 @@ class RSMQClient implements RSMQClientInterface
         $key  = "{$this->ns}$queue";
         $resp = $this->predis->time();
 
+        /**
+ * @psalm-suppress UndefinedMagicMethod 
+*/
         $transaction = $this->predis->transaction();
         $transaction->hmget("$key:Q", ['vt', 'delay', 'maxsize', 'totalrecv', 'totalsent', 'created', 'modified']);
         $transaction->zcard($key);
@@ -338,15 +348,15 @@ class RSMQClient implements RSMQClientInterface
             (int)$resp[0][4],
             (int)$resp[0][5],
             (int)$resp[0][6],
-            $resp[1],
-            $resp[2]
+            (int)$resp[1],
+            (int)$resp[2]
         );
     }
 
     /**
-     * @param string   $queue
-     * @param string   $message
-     * @param int|null $delay
+     * @param  string   $queue
+     * @param  string   $message
+     * @param  int|null $delay
      * @return string
      * @throws MessageToLongException
      * @throws QueueNotFoundException
@@ -380,7 +390,7 @@ class RSMQClient implements RSMQClientInterface
             $this->predis->zcard($key);
         }
 
-        $resp = $this->predis->exec();
+        $resp = $this->predis->exec() ?? [];
 
         if ($this->realtime) {
             $this->predis->publish("{$this->ns}rt:$$queue", $resp[3]);
@@ -390,8 +400,8 @@ class RSMQClient implements RSMQClientInterface
     }
 
     /**
-     * @param string $queue
-     * @param array  $options
+     * @param  string $queue
+     * @param  array  $options
      * @return Message|null
      * @throws QueueNotFoundException
      * @throws QueueParametersValidationException
@@ -418,16 +428,16 @@ class RSMQClient implements RSMQClientInterface
         }
 
         return new Message(
-            $resp[0],
-            $resp[1],
+            (string)$resp[0],
+            (string)$resp[1],
             (int)$resp[2],
             (int)$resp[3],
-            base_convert(substr($resp[0], 0, 10), 36, 10) / 1000
+            (float)base_convert(substr($resp[0], 0, 10), 36, 10) / 1000
         );
     }
 
     /**
-     * @param string $queue
+     * @param  string $queue
      * @return Message|null
      * @throws QueueNotFoundException
      * @throws QueueParametersValidationException
@@ -447,17 +457,17 @@ class RSMQClient implements RSMQClientInterface
             return null;
         }
         return new Message(
-            $resp[0],
-            $resp[1],
+            (string)$resp[0],
+            (string)$resp[1],
             (int)$resp[2],
             (int)$resp[3],
-            base_convert(substr($resp[0], 0, 10), 36, 10) / 1000
+            (float)base_convert(substr($resp[0], 0, 10), 36, 10) / 1000
         );
     }
 
     /**
-     * @param string $queue
-     * @param string $id
+     * @param  string $queue
+     * @param  string $id
      * @return bool
      * @throws QueueParametersValidationException
      */
@@ -474,15 +484,15 @@ class RSMQClient implements RSMQClientInterface
         $this->predis->multi();
         $this->predis->zrem($key, $id);
         $this->predis->hdel("$key:Q", [$id, "$id:rc", "$id:fr"]);
-        $resp = $this->predis->exec();
+        $resp = $this->predis->exec() ?? [];
 
         return $resp[0] === 1 && $resp[1] > 0;
     }
 
     /**
-     * @param string $queue
-     * @param string $id
-     * @param int    $vt
+     * @param  string $queue
+     * @param  string $id
+     * @param  int    $vt
      * @return bool
      * @throws QueueParametersValidationException
      * @throws QueueNotFoundException

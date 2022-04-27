@@ -19,18 +19,18 @@ interface RSMQClientInterface
 {
 
     /**
-     * @param string $name
-     * @param int    $vt
-     * @param int    $delay
-     * @param int    $maxSize
+     * @param  string $name
+     * @param  int    $vt
+     * @param  int    $delay
+     * @param  int    $maxSize
      * @return bool
      * @throws QueueAlreadyExistsException
      */
     public function createQueue(string $name, int $vt = 30, int $delay = 0, int $maxSize = 65536): bool;
 
     /**
-     * @param string $queue
-     * @param array  $options
+     * @param  string $queue
+     * @param  array  $options
      * @return Message|null
      * @throws QueueNotFoundException
      * @throws QueueParametersValidationException
@@ -38,9 +38,9 @@ interface RSMQClientInterface
     public function receiveMessage(string $queue, array $options = []): ?Message;
 
     /**
-     * @param string $queue
-     * @param string $id
-     * @param int    $vt
+     * @param  string $queue
+     * @param  string $id
+     * @param  int    $vt
      * @return bool
      * @throws QueueParametersValidationException
      * @throws QueueNotFoundException
@@ -48,7 +48,7 @@ interface RSMQClientInterface
     public function changeMessageVisibility(string $queue, string $id, int $vt): bool;
 
     /**
-     * @param string $queue
+     * @param  string $queue
      * @return QueueAttributes
      * @throws QueueNotFoundException
      * @throws QueueParametersValidationException
@@ -56,10 +56,10 @@ interface RSMQClientInterface
     public function getQueueAttributes(string $queue): QueueAttributes;
 
     /**
-     * @param string   $queue
-     * @param int|null $vt
-     * @param int|null $delay
-     * @param int|null $maxSize
+     * @param  string   $queue
+     * @param  int|null $vt
+     * @param  int|null $delay
+     * @param  int|null $maxSize
      * @return QueueAttributes
      * @throws QueueParametersValidationException
      * @throws QueueNotFoundException
@@ -72,13 +72,13 @@ interface RSMQClientInterface
     ): QueueAttributes;
 
     /**
-     * @param string $name
+     * @param  string $name
      * @throws QueueNotFoundException
      */
     public function deleteQueue(string $name): void;
 
     /**
-     * @param string $queue
+     * @param  string $queue
      * @return Message|null
      * @throws QueueNotFoundException
      * @throws QueueParametersValidationException
@@ -86,14 +86,14 @@ interface RSMQClientInterface
     public function popMessage(string $queue): ?Message;
 
     /**
-     * @param array<string, mixed> $params
+     * @param  array<string, mixed> $params
      * @throws QueueParametersValidationException
      */
     public function validate(array $params): void;
 
     /**
-     * @param string $queue
-     * @param string $id
+     * @param  string $queue
+     * @param  string $id
      * @return bool
      * @throws QueueParametersValidationException
      */
@@ -105,9 +105,9 @@ interface RSMQClientInterface
     public function listQueues(): array;
 
     /**
-     * @param string   $queue
-     * @param string   $message
-     * @param int|null $delay
+     * @param  string   $queue
+     * @param  string   $message
+     * @param  int|null $delay
      * @return string
      * @throws MessageToLongException
      * @throws QueueNotFoundException
