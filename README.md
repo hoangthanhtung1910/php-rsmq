@@ -26,19 +26,21 @@ This is a fork of [eislambey/php-rsmq](https://github.com/eislambey/php-rsmq) wi
 
 - [Installation](#installation)
 - [Methods](#methods)
-  * [Construct](#construct)
-  * [Queue](#queue)
-    + [createQueue](#createqueue)
-    + [listQueues](#listqueues)
-    + [deleteQueue](#deletequeue)
-    + [getQueueAttributes](#getqueueattributes)
-    + [setQueueAttributes](#setqueueattributes)
-  * [Messages](#messages)
-    + [sendMessage](#sendmessage)
-    + [receiveMessage](#receivemessage)
-    + [deleteMessage](#deletemessage)
-    + [popMessage](#popmessage)
-    + [changeMessageVisibility](#changemessagevisibility)
+    * [Construct](#construct)
+    * [Queue](#queue)
+        + [createQueue](#createqueue)
+        + [listQueues](#listqueues)
+        + [deleteQueue](#deletequeue)
+        + [getQueueAttributes](#getqueueattributes)
+        + [setQueueAttributes](#setqueueattributes)
+    * [Messages](#messages)
+        + [sendMessage](#sendmessage)
+        + [receiveMessage](#receivemessage)
+        + [deleteMessage](#deletemessage)
+        + [popMessage](#popmessage)
+        + [changeMessageVisibility](#changemessagevisibility)
+    * [Realtime](#realtime)
+        + [How to use the realtime option](#how-to-use-the-realtime-option)
 - [QueueWorker](#queueworker)
 - [LICENSE](#license)
 
@@ -422,6 +424,24 @@ if($rsmq->changeMessageVisibility($queue, $id, 60)) {
 	echo "Message hidden for 60 secs";
 }
 ```
+
+## Realtime
+
+When creating an instance of  `AndrewBreksa\RSMQ\RSMQClient`, you can enable the realtime `PUBLISH` for new messages by
+passing `true` for the `$realtime` argument of `\AndrewBreksa\RSMQ\RSMQClient::__construct`. On every new message that
+is sent via `sendMessage`, a Redis `PUBLISH` will be issued to `{rsmq.ns}:rt:{qname}`.
+
+Example for RSMQ with default settings:
+
+* The queue `testQueue` already contains 5 messages.
+* A new message is being sent to the queue `testQueue`.
+* The following Redis command will be issued: `PUBLISH rsmq:rt:testQueue 6`
+
+The realtime option enables sending a `PUBLISH` when a new message is sent to RSMQ, however no further functionality is
+built on this feature. Your app could use the Redis `SUBSCRIBE` command to be notified of new messages and then attempt
+to poll from the queue, however due to how the Redis pub/sub system works,
+[all listeners will be notified of the new message](https://redis.io/docs/manual/pubsub/), this method doesn't lend
+itself to driving message handling in environments with more than one subscribed process.
 
 # QueueWorker
 
