@@ -71,7 +71,7 @@ class RSMQClient implements RSMQClientInterface
 
     private function initScripts(): void
     {
-        $receiveMessageScript = 'local msg = redis.call("ZRANGEBYSCORE", KEYS[1], "-inf", KEYS[2], "LIMIT", "0", "1")
+        $receiveMessageScript = 'local msg = redis.call("ZRANGE",KEYS[1], 0, 1, "WITHSCORES")
 			if #msg == 0 then
 				return {}
 			end
@@ -89,7 +89,7 @@ class RSMQClient implements RSMQClientInterface
 			end
 			return o';
 
-        $popMessageScript = 'local msg = redis.call("ZRANGEBYSCORE", KEYS[1], "-inf", KEYS[2], "LIMIT", "0", "1")
+        $popMessageScript = 'local msg = redis.call("ZRANGE",KEYS[1], 0, 1, "WITHSCORES")
 			if #msg == 0 then
 				return {}
 			end

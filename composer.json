@@ -1,17 +1,13 @@
 {
-  "name": "andrewbreksa/rsmq",
+  "name": "iosha08/rsmq",
   "description": "Redis Simple Message Queue.",
   "type": "library",
   "license": "MIT",
   "version": "2.0.2",
   "authors": [
     {
-      "name": "emre can islambey",
+      "name": "Iosha08",
       "email": "eislambey@gmail.com"
-    },
-    {
-      "name": "Andrew Breksa",
-      "email": "andrew@andrewbreksa.com"
     }
   ],
   "require": {
